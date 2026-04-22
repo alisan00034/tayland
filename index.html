@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<title>Tayland v1 · 23 May - 5 Haz 2026</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Tayland" />
+<meta name="theme-color" content="#0d3b2e" />
+
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230d3b2e'/><text x='90' y='118' font-family='Georgia,serif' font-size='110' font-style='italic' fill='%23fff4e0' text-anchor='middle'>T</text><circle cx='138' cy='50' r='8' fill='%23f5a524'/></svg>" />
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%230d3b2e'/><text x='90' y='118' font-family='Georgia,serif' font-size='110' font-style='italic' fill='%23fff4e0' text-anchor='middle'>T</text><circle cx='138' cy='50' r='8' fill='%23f5a524'/></svg>" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --ink: #0d2e26; --paper: #fdf6e9; --paper-2: #f4e9d1;
+    --accent: #c95d2e; --accent-2: #f5a524;
+    --jade: #2d6b5a; --sea: #1e5f7e;
+    --mute: #7a7260; --line: #d4c39a; --gold: #b08838;
+    --plane: #6d4c8f; --hotel: #a6512e;
+    --booked: #c8a94a; --lotus: #e87ba0;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--paper); color: var(--ink); font-family: 'Fraunces', serif; -webkit-font-smoothing: antialiased; overscroll-behavior: none; height: 100%; }
+  body { min-height: 100vh; min-height: 100dvh; }
+
+  .app { display: grid; grid-template-rows: auto 1fr auto 1fr; height: 100vh; height: 100dvh; overflow: hidden; }
+
+  .top {
+    padding: calc(10px + var(--safe-top)) 16px 10px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    background-image: radial-gradient(circle at 10% 20%, rgba(245,165,36,.08) 0%, transparent 60%), radial-gradient(circle at 90% 80%, rgba(45,107,90,.06) 0%, transparent 60%);
+  }
+  .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .brand { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; line-height: 1; letter-spacing: -.02em; }
+  .brand em { font-style: italic; color: var(--accent); }
+  .brand .v { font-size: 10px; color: var(--mute); font-style: normal; vertical-align: super; margin-left: 4px; font-family: 'JetBrains Mono', monospace; letter-spacing: .1em; }
+  .dates { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--mute); text-align: right; }
+  .dates strong { color: var(--ink); font-weight: 500; }
+  .progress-wrap { margin-top: 8px; display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .15em; text-transform: uppercase; color: var(--mute); }
+  .progress-bar { flex: 1; height: 3px; background: var(--paper-2); position: relative; overflow: hidden; border: 1px solid var(--line); }
+  .progress-fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 0%; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  .reset-btn { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .15em; text-transform: uppercase; background: transparent; border: 1px solid var(--line); padding: 3px 8px; color: var(--mute); cursor: pointer; }
+
+  .draft-banner { background: var(--accent-2); color: var(--ink); padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .15em; text-align: center; margin-bottom: 8px; }
+
+  .map-wrap { position: relative; overflow: hidden; min-height: 0; }
+  #map { width: 100%; height: 100%; background: #c8dde0; }
+  .leaflet-container { font-family: 'Fraunces', serif; background: #c8dde0; }
+  .leaflet-popup-content-wrapper { border-radius: 2px; background: var(--paper); border: 1px solid var(--line); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+  .leaflet-popup-content { margin: 8px 12px; font-size: 12px; font-weight: 500; }
+  .leaflet-popup-tip { background: var(--paper); border: 1px solid var(--line); }
+
+  .map-marker { background: transparent; border: none; }
+  .pin { width: 26px; height: 26px; background: var(--accent); border: 2px solid var(--paper); border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 6px rgba(0,0,0,.25); }
+  .pin-num { transform: rotate(45deg); color: var(--paper); font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; }
+  .pin.done { background: var(--jade); }
+  .pin.day-1, .pin.day-2 { background: #6d4c8f; }
+  .pin.day-3, .pin.day-4, .pin.day-5, .pin.day-6, .pin.day-7 { background: var(--accent); }
+  .pin.day-8, .pin.day-9, .pin.day-10, .pin.day-11, .pin.day-12 { background: var(--jade); }
+  .pin.day-13, .pin.day-14 { background: var(--sea); }
+  .pin.food { width: 20px; height: 20px; background: #b8734a; }
+  .pin.food .pin-num { font-size: 9px; }
+  .pin.hotel-pin { background: var(--hotel); width: 30px; height: 30px; }
+  .pin.airport-pin { background: var(--plane); width: 26px; height: 26px; }
+  .pin.active { transform: rotate(-45deg) scale(1.3); box-shadow: 0 0 0 5px rgba(201,93,46,.25), 0 3px 6px rgba(0,0,0,.3); z-index: 1000; }
+
+  .map-legend { position: absolute; top: 8px; right: 8px; background: rgba(253,246,233,.92); backdrop-filter: blur(6px); border: 1px solid var(--line); padding: 6px 10px; font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); z-index: 400; border-radius: 2px; }
+  .legend-row { display: flex; align-items: center; gap: 6px; padding: 1px 0; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .map-filter { position: absolute; top: 8px; left: 8px; background: rgba(253,246,233,.92); backdrop-filter: blur(6px); border: 1px solid var(--line); padding: 6px 8px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); z-index: 400; border-radius: 2px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .map-filter button { background: transparent; border: 1px solid transparent; padding: 2px 6px; color: var(--mute); font-family: inherit; font-size: inherit; letter-spacing: inherit; cursor: pointer; }
+  .map-filter button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  .divider { height: 28px; background: var(--paper); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: center; gap: 10px; cursor: ns-resize; touch-action: none; position: relative; z-index: 10; user-select: none; }
+  .divider .grip { width: 36px; height: 4px; border-radius: 4px; background: var(--line); }
+  .divider .divider-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--mute); }
+
+  .plan-wrap { min-height: 0; overflow: hidden; position: relative; }
+  .plan-col { height: 100%; padding: 14px 16px calc(24px + var(--safe-bottom)); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+  .meta-card { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--paper-2); border: 1px solid var(--line); border-radius: 3px; margin-bottom: 10px; font-size: 12px; cursor: pointer; }
+  .meta-card .ic { font-size: 16px; flex-shrink: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--paper); border-radius: 50%; border: 1px solid var(--line); }
+  .meta-card .meta-t { flex: 1; }
+  .meta-card .meta-name { font-weight: 500; font-size: 13px; line-height: 1.3; }
+  .meta-card .meta-desc { font-size: 11px; color: var(--mute); margin-top: 2px; line-height: 1.4; }
+  .meta-card.hotel { border-left: 3px solid var(--hotel); }
+  .meta-card.transfer { border-left: 3px solid var(--plane); }
+
+  .phase { margin: 20px -16px 14px; padding: 8px 16px; background: linear-gradient(90deg, rgba(201,93,46,.12), transparent); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); font-family: 'Instrument Serif', serif; font-style: italic; font-size: 20px; color: var(--accent); display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .phase .phase-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--mute); font-style: normal; }
+  .phase.phangan { background: linear-gradient(90deg, rgba(45,107,90,.12), transparent); color: var(--jade); }
+
+  .day { margin-bottom: 18px; }
+  .day-header { display: flex; align-items: baseline; gap: 10px; padding-bottom: 6px; border-bottom: 1px dashed var(--line); margin-bottom: 10px; }
+  .day-num { font-family: 'Instrument Serif', serif; font-size: 32px; line-height: 1; color: var(--accent); font-style: italic; }
+  .day-meta { flex: 1; min-width: 0; }
+  .day-date { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--mute); margin-bottom: 2px; }
+  .day-title { font-size: 14px; font-weight: 500; letter-spacing: -.01em; line-height: 1.25; }
+  .day-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+  .day-count { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--mute); white-space: nowrap; }
+
+  .weather-pill { display: inline-flex; align-items: center; gap: 5px; padding: 2px 7px; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .05em; color: var(--mute); white-space: nowrap; }
+  .weather-pill .hi { color: var(--accent); font-weight: 500; }
+  .weather-pill .lo { color: var(--sea); }
+
+  .stop { display: flex; gap: 10px; padding: 10px 10px; border: 1px solid transparent; cursor: pointer; margin-bottom: 3px; border-radius: 2px; position: relative; }
+  .stop:active { background: var(--paper-2); }
+  .stop.active { background: var(--paper-2); border-color: var(--gold); box-shadow: inset 3px 0 0 var(--accent); }
+  .stop.done .stop-name { text-decoration: line-through; text-decoration-color: var(--mute); color: var(--mute); }
+  .stop.opt { opacity: .75; }
+
+  .checkbox { width: 22px; height: 22px; border: 1.5px solid var(--ink); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--paper); transition: all .3s cubic-bezier(.2,.8,.2,1); margin-top: 1px; }
+  .checkbox svg { opacity: 0; transform: scale(.5); transition: all .3s cubic-bezier(.4,1.4,.5,1); }
+  .stop.done .checkbox { background: var(--jade); border-color: var(--jade); }
+  .stop.done .checkbox svg { opacity: 1; transform: scale(1); stroke: var(--paper); }
+
+  .stop-body { flex: 1; min-width: 0; }
+  .stop-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 1px; }
+  .stop-name { font-size: 14px; font-weight: 500; letter-spacing: -.01em; line-height: 1.25; }
+  .stop-time { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: .08em; color: var(--mute); flex-shrink: 0; }
+  .stop-tag { display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: .12em; text-transform: uppercase; padding: 1px 5px; background: var(--paper); border: 1px solid var(--line); color: var(--mute); margin-top: 4px; margin-right: 3px; }
+  .stop-tag.eat { color: var(--accent); border-color: rgba(201,93,46,.3); }
+  .stop-tag.view { color: var(--sea); border-color: rgba(30,95,126,.3); }
+  .stop-tag.spa { color: var(--lotus); border-color: rgba(232,123,160,.3); }
+  .stop-tag.activity { color: var(--jade); border-color: rgba(45,107,90,.3); }
+  .stop-tag.must { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .stop-tag.opt { background: transparent; color: var(--mute); border-style: dashed; }
+  .stop-hint { font-size: 11px; color: var(--mute); margin-top: 2px; font-style: italic; line-height: 1.4; }
+
+  .detail-overlay { position: fixed; inset: 0; background: rgba(13,46,38,.55); opacity: 0; pointer-events: none; transition: opacity .3s ease; z-index: 500; }
+  .detail-overlay.open { opacity: 1; pointer-events: all; }
+  .detail-panel { position: fixed; left: 0; right: 0; bottom: 0; max-height: 85vh; max-height: 85dvh; background: var(--paper); border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; padding: 8px 22px calc(24px + var(--safe-bottom)); overflow-y: auto; -webkit-overflow-scrolling: touch; transform: translateY(100%); transition: transform .4s cubic-bezier(.2,.8,.2,1); z-index: 501; box-shadow: 0 -20px 60px -20px rgba(0,0,0,.3); }
+  .detail-panel.open { transform: translateY(0); }
+  .sheet-handle { width: 40px; height: 4px; border-radius: 4px; background: var(--line); margin: 6px auto 16px; }
+
+  .d-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .25em; text-transform: uppercase; color: var(--mute); margin-bottom: 6px; }
+  .d-title { font-family: 'Instrument Serif', serif; font-size: 30px; line-height: 1.05; letter-spacing: -.02em; margin-bottom: 8px; }
+  .d-address { font-size: 12px; color: var(--mute); font-style: italic; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px dashed var(--line); }
+  .d-section { margin-bottom: 16px; }
+  .d-section-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; }
+  .d-section p { font-size: 14px; line-height: 1.5; color: var(--ink); font-weight: 300; }
+  .d-btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .d-action { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; background: var(--ink); color: var(--paper); text-decoration: none; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .15em; text-transform: uppercase; border: 1px solid var(--ink); }
+  .d-action.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .d-toggle { width: 100%; padding: 13px 18px; background: var(--paper-2); border: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: .2em; text-transform: uppercase; cursor: pointer; color: var(--ink); margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .d-toggle.done-state { background: var(--jade); color: var(--paper); border-color: var(--jade); }
+
+  .route-steps { list-style: none; padding: 0; margin: 6px 0 0; }
+  .route-steps li { padding: 8px 0 8px 26px; font-size: 13px; line-height: 1.5; border-bottom: 1px dotted var(--line); position: relative; color: var(--ink); font-weight: 300; }
+  .route-steps li:last-child { border-bottom: none; }
+  .route-steps li::before { content: attr(data-ic); position: absolute; left: 0; top: 7px; font-size: 14px; }
+  .route-steps li strong { font-weight: 500; color: var(--ink); }
+
+  @media (min-width: 900px) {
+    .app { grid-template-rows: auto 1fr; grid-template-columns: 1fr 1.1fr; }
+    .top { grid-column: 1 / -1; padding: 20px 28px 16px; }
+    .plan-wrap { grid-row: 2; grid-column: 1; border-right: 1px solid var(--line); }
+    .map-wrap { grid-row: 2; grid-column: 2; }
+    .divider { display: none; }
+    .brand { font-size: 36px; }
+  }
+
+  .intro { position: fixed; inset: 0; background: var(--ink); color: var(--paper); display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 9999; transition: opacity .6s ease; }
+  .intro.hide { opacity: 0; pointer-events: none; }
+  .intro h2 { font-family: 'Instrument Serif', serif; font-size: clamp(40px, 14vw, 88px); font-weight: 400; font-style: italic; letter-spacing: -.02em; color: var(--accent-2); }
+  .intro .line { width: 40px; height: 1px; background: var(--paper); opacity: .4; margin: 14px 0; }
+  .intro p { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .3em; text-transform: uppercase; opacity: .6; }
+</style>
+</head>
+<body>
+
+<div class="intro" id="intro">
+  <p>Loading</p>
+  <div class="line"></div>
+  <h2>Thailand.</h2>
+  <div class="line"></div>
+  <p>v1 · 23 May — 5 Jun</p>
+</div>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="draft-banner">🌴 <strong>V1 TASLAK</strong> · uçuş, otel rezervasyonları henüz yapılmadı · planı test et, ayarlamalar söyle</div>
+    <div class="top-row">
+      <div class="brand">Tayland<em>.</em><span class="v">v1</span></div>
+      <div class="dates"><strong>23 May — 5 Haz</strong> · 13 gün</div>
+    </div>
+    <div class="progress-wrap">
+      <span id="progressText">0 / 0</span>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <button class="reset-btn" id="resetBtn">Sıfırla</button>
+    </div>
+  </header>
+
+  <div class="map-wrap">
+    <div id="map"></div>
+    <div class="map-filter">
+      <button data-filter="all" class="on">Tümü</button>
+      <button data-filter="stops">Plan</button>
+      <button data-filter="food">Yemek</button>
+    </div>
+    <div class="map-legend">
+      <div class="legend-row"><span class="legend-dot" style="background:#6d4c8f"></span>Uçuş</div>
+      <div class="legend-row"><span class="legend-dot" style="background:#a6512e"></span>Otel</div>
+      <div class="legend-row"><span class="legend-dot" style="background:#c95d2e"></span>Samui</div>
+      <div class="legend-row"><span class="legend-dot" style="background:#2d6b5a"></span>Phangan</div>
+      <div class="legend-row"><span class="legend-dot" style="background:#b8734a"></span>Yemek</div>
+    </div>
+  </div>
+
+  <div class="divider" id="divider">
+    <div class="grip"></div>
+    <div class="divider-label">↕ Sürükle</div>
+    <div class="grip"></div>
+  </div>
+
+  <div class="plan-wrap"><div class="plan-col" id="planCol"></div></div>
+</div>
+
+<div class="detail-overlay" id="overlay"></div>
+<aside class="detail-panel" id="detailPanel">
+  <div class="sheet-handle"></div>
+  <div id="detailContent"></div>
+</aside>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const HOTELS = {
+  samui: { id: 'hotel-samui', name: 'Four Seasons Resort Koh Samui', address: '219 Moo 5, Angthong, Koh Samui 84140', lat: 9.5725165, lng: 99.9238924, area: 'Laem Yai Bay (kuzeybatı, sakin)', nights: '24 May - 29 May · 5 gece', info: 'Tripadvisor 4.8/5 · Samui\'nin en lüks ve en ıssız noktası Laem Yai Bay\'de. 60 villanın her birinin kendi infinity havuzu ve okyanus manzarası var. Havalimanına 30 dk. Koh Phangan manzarası karşıda. Kuzeybatı yönü → gün batımı.', tip: 'Alternatifler: Six Senses Samui (Plai Laem, "barefoot luxury"), Banyan Tree Samui (Lamai, rezidans stili), Ritz-Carlton Samui (2 plaj). $600-1200/gece bandında.' },
+  phangan: { id: 'hotel-phangan', name: 'Anantara Rasananda Koh Phangan Villas', address: '5/5 Moo 5, Thong Nai Pan Noi Beach', lat: 9.7792992, lng: 100.0554169, area: 'Thong Nai Pan Noi (kuzeydoğu, en lüks plaj)', nights: '29 May - 4 Haz · 6 gece', info: 'Tripadvisor 4.7/5 · Phangan\'ın en lüks resortu. Her villa kendi plunge pool\'lu. Kuzeydoğu Thong Nai Pan Noi plajı (adanın en güzeli, yarım ay, berrak). Haad Rin\'e (Full Moon) 45 dk.', tip: 'Alternatifler: Santhiya Phangan (teak-wood, hilltop), Panviman (aynı plaj, mütevazi), KUUL Villas (Aralık 2025, ultra-yeni wellness).' }
+};
+
+const TRANSFERS = {
+  ist_samui: { title: 'İstanbul → Koh Samui · 2 etap', summary: 'TK direkt Bangkok + Bangkok Airways iç', duration: '~16 saat kapı-kapı', steps: [
+    { ic: '✈️', text: '<strong>23 May Cmt gece:</strong> İST → BKK, TK 68. ~9h 45m.' },
+    { ic: '🕐', text: '<strong>24 May sabah:</strong> BKK varış. Transit 2.5 saat.' },
+    { ic: '🧳', text: '<strong>Bagajı BKK\'de al</strong> — Bangkok Airways ayrı PNR, yeniden check-in.' },
+    { ic: '✈️', text: '<strong>BKK → USM:</strong> Bangkok Airways PG, ~1h 20m. Günde 20+ sefer.' },
+    { ic: '🚗', text: '<strong>USM → Four Seasons:</strong> 30 dk özel transfer.' }
+  ]},
+  samui_phangan: { title: 'Samui → Phangan', summary: 'Four Seasons → Bangrak pier → Anantara speedboat', duration: '~1 saat', steps: [
+    { ic: '🏨', text: '<strong>29 May öğle:</strong> FS check-out, Bangrak pier (15 dk).' },
+    { ic: '⛵', text: '<strong>Anantara özel speedboat</strong> → Thong Nai Pan (30 dk).' },
+    { ic: '🥥', text: '<em>Ekonomik alt:</em> Lomprayah ferry → Thong Sala + taksi (45 dk jungle).' }
+  ]},
+  phangan_ist: { title: 'Phangan → İstanbul', summary: 'Ferry + iç uçuş + uluslararası', duration: '~20 saat', steps: [
+    { ic: '🏨', text: '<strong>4 Haz sabah erken:</strong> Anantara → Thong Sala pier.' },
+    { ic: '⛵', text: '<strong>07:30 Lomprayah ferry</strong> → Bangrak (30 dk).' },
+    { ic: '✈️', text: '<strong>11:00 PG</strong> → Bangkok.' },
+    { ic: '🏨', text: '<strong>BKK 1 gece</strong> (opsiyonel): Son Tayland akşamı.' },
+    { ic: '✈️', text: '<strong>5 Haz:</strong> BKK → IST, TK 69.' }
+  ]}
+};
+
+const FOOD = [
+  { id: 'fishermans', name: 'Fisherman\'s Village', kind: 'Pazar + restoran', area: 'Bophut (Samui)', lat: 9.5587504, lng: 100.0305025, note: 'Perşembe Walking Street · Coco Tam\'s, Zazen' },
+  { id: 'bigbuddha-area', name: 'Big Buddha Area', kind: 'Tapınak + pazar', area: 'Bangrak (Samui)', lat: 9.5707832, lng: 100.0597982, note: '12m altın Buda · ada ikonu' },
+  { id: 'ango-park', name: 'Ang Thong Marine Park', kind: 'Ulusal park · day trip', area: 'Samui açık deniz', lat: 9.6352349, lng: 99.671822, note: '42 ada · "The Beach" ilhamı' },
+  { id: 'magic-garden', name: 'Secret Buddha Garden', kind: 'Jungle + heykeller', area: 'Samui iç', lat: 9.4829041, lng: 99.9944804, note: '1976 · tek adamın eseri' },
+  { id: 'haad-rin', name: 'Haad Rin Beach', kind: 'Full Moon Party', area: 'Phangan güney', lat: 9.676594, lng: 100.0680853, note: '3 Haz 2026 dolunay gecesi' },
+  { id: 'thong-nai-pan', name: 'Thong Nai Pan Noi', kind: 'En güzel plaj', area: 'Phangan kuzeydoğu', lat: 9.77965, lng: 100.0549, note: 'Anantara\'nın plajı' },
+  { id: 'bottle-beach', name: 'Bottle Beach', kind: 'İzole koy', area: 'Phangan kuzey', lat: 9.8, lng: 100.02, note: 'Sadece teknekle · zümrüt su' },
+  { id: 'secret-bar', name: 'Secret Beach Bar', kind: 'Sunset bar', area: 'Phangan batı', lat: 9.725, lng: 99.9595, note: 'Phangan\'ın en iyi gün batımı' },
+  { id: 'thong-sala', name: 'Thong Sala Night Market', kind: 'Sokak yemeği', area: 'Phangan merkez', lat: 9.7105, lng: 100.0095, note: 'Salı + Cmt gecesi' }
+];
+
+const ITINERARY = [
+  { day: 1, dayLabel: 'Cumartesi · 23 May', theme: '✈️ İstanbul → Bangkok · Gece Uçuşu', weather: { hi: 23, lo: 16, icon: '🇹🇷', desc: 'İstanbul' }, phase: 'transit', stops: [
+    { id: 'ist-dep', name: 'İstanbul Havalimanı · Kalkış', time: 'Akşam', tags: ['must'], tagLabels: { must: 'UÇUŞ' }, hint: 'TK 68 · IST → BKK · ~9h 45m', lat: 41.2753, lng: 28.7519, address: 'İstanbul Havalimanı (IST)', history: 'İstanbul Havalimanı 2018\'de açıldı — dünyanın en büyük terminaliyle. TK direkt uçuşları ile Bangkok\'a 9-10 saat. Gece uçuşu jetlag\'i hafifletir.', knowBefore: 'Check-in 3 saat öncesi. Bangkok\'ta aktarma için min 2.5 saat al. Bangkok Airways ayrı PNR, bagaj yeniden check-in.', tip: 'Uçakta bol su, az alkol. Uyku maskesi + kulaklık. Business lounge Miles&Smiles Elite/Business\'a açık.' }
+  ]},
+  { day: 2, dayLabel: 'Pazar · 24 May', theme: '🛬 Bangkok aktarma + Samui varış', weather: { hi: 32, lo: 26, icon: '☀️', desc: 'Sıcak + kısa yağmur olasılığı' }, phase: 'transit', preTransfer: 'ist_samui', stops: [
+    { id: 'bkk-transit', name: 'Bangkok Suvarnabhumi · Aktarma', time: '~14:30 varış', tags: ['must'], tagLabels: { must: 'AKTARMA' }, hint: '~2.5 saat · iç uçuş hazırlık', lat: 13.6818969, lng: 100.7468694, address: 'BKK', history: 'BKK 2006\'da Helmut Jahn tarafından açıldı. Bangkok Airways Lounge tüm PG yolcularına ücretsiz.', knowBefore: 'Vize: Türk vatandaşları 30 gün vizesiz. Pasaport 6 ay geçerli olmalı. 7-Eleven\'dan SIM al (True/AIS, ~£10 = 15GB).', tip: 'Bangkok Airways Boutique Lounge ücretsiz snack + shower.' },
+    { id: 'samui-arrive', name: 'Samui (USM) → Four Seasons', time: 'Akşamüstü', tags: ['must'], tagLabels: { must: 'VARIŞ' }, hint: 'Açık hava havalimanı · resort transfer', lat: 9.5484366, lng: 100.0630279, address: 'Samui Airport (USM)', history: 'USM 1989\'da Bangkok Airways inşa etti — dünyanın en güzel açık hava tropikal havalimanı. Pist yolcu tramwayleriyle ananas bahçesinden geçer.', knowBefore: 'Bagaj 15 dk. FS lobby\'de buggy transfer + welcome drink. Villa check-in + dinlen.', tip: 'İlk akşam: Koh Thai Kitchen (resort) ya da Pla Pla (beach seafood). Erken yat.' }
+  ]},
+  { day: 3, dayLabel: 'Pazartesi · 25 May', theme: '🧘 Resort dinlen + Thai Cooking Class', weather: { hi: 33, lo: 27, icon: '⛅', desc: 'Sıcak · öğleden sonra yağmur' }, phase: 'samui', stops: [
+    { id: 'resort-chill', name: 'Four Seasons · Dinlen günü', time: 'Sabah', tags: ['spa', 'must'], tagLabels: { spa: 'RELAX', must: 'JET-LAG' }, hint: 'Villa kahvaltısı · havuz · plaj', lat: 9.5725165, lng: 99.9238924, address: 'Four Seasons Laem Yai', history: 'Jetlag için ilk 24 saat kritik: gün ışığı, bol su, hafif aktivite.', knowBefore: 'In-villa breakfast. Free kayak/SUP/paddleboard. Ertesi günkü spa rezervasyonu yap.', tip: 'Güneş güçlü — SPF 50 şart. Phangan silueti karşında, anlamlı bir manzara.' },
+    { id: 'cooking-class', name: 'Thai Cooking Class', time: '13:00 — 16:00', tags: ['activity', 'must'], tagLabels: { activity: 'AKTİVİTE', must: 'SİZİN FAVORİ' }, hint: 'Market tour + 4 yemek', lat: 9.5725165, lng: 99.9238924, address: 'FS içi veya Bophut (Samui Institute of Thai Culinary Arts)', history: 'Thai mutfağı 4 tat: tatlı (hindistan cevizi sütü), ekşi (lime, tamarind), tuzlu (balık sosu), baharatlı (chili). Güney Tayland = hindistan cevizi + deniz ürünleri.', knowBefore: 'FS kendi class ~$150. Alt: Samui Institute (Chaweng, $60-80) ya da Lamai. Market tour + 4 tabak (Tom Yum, Pad Thai, Massaman, Mango Sticky Rice).', tip: 'Önceden rez. Alerji belirt. Evde tekrarlayacak bir tarif → kalıcı hediye.' },
+    { id: 'fishermans-dinner', name: 'Fisherman\'s Village · Akşam Yemeği', time: '19:00 — 21:30', tags: ['eat'], tagLabels: { eat: 'AKŞAM' }, hint: 'Bophut · walking street · lokal + trendy', lat: 9.5587504, lng: 100.0305025, address: 'Thanon Laan Thong, Bophut', history: 'Fisherman\'s Village (Ban Plai Laem) Samui\'nin en eski balıkçı köyü, 19. yy Çin-Hainanlı topluluğu. Perşembe akşamları Walking Street pazarı.', knowBefore: 'Coco Tam\'s (plaj kokteyl, mumlu masa), The Shack (chilled), Krua Bophut (lokal Thai), Zazen (fine-dining fusion).', tip: 'Resort\'tan 20 dk taksi (~600 THB). Yemek sonrası plajda yürü.' }
+  ]},
+  { day: 4, dayLabel: 'Salı · 26 May', theme: '🐠 Ang Thong Marine Park', weather: { hi: 32, lo: 27, icon: '⛅', desc: 'Deniz seferi · sakin sabah' }, phase: 'samui', stops: [
+    { id: 'ango', name: 'Ang Thong National Marine Park', time: '08:00 — 17:00', tags: ['activity', 'must', 'view'], tagLabels: { activity: 'DAY TRIP', must: 'MUTLAKA', view: 'DOĞAL' }, hint: '42 zümrüt ada · "The Beach" ilhamı', lat: 9.6352349, lng: 99.671822, address: 'Mu Ko Ang Thong National Park', history: 'Ang Thong ("altın kase") 102 km² · 42 kireçtaşı ada · 1980\'de ulusal park. Alex Garland\'ın "The Beach" romanı (DiCaprio filmi) bu parkın Emerald Lagoon\'u için yazıldı. Monkey Island zirvesinden tüm 42 ada görünür.', knowBefore: 'Sadece tur. Speedboat (1 saat, 2500 THB, 8-15 kişi) ya da Big Boat (2.5 saat, 1800 THB, az bump). Speedboat öneri. FS private charter da mümkün.', tip: 'Getir: mineral güneş kremi (mercan dostu), havlu, su ayakkabısı. Yaz sakin deniz.' },
+    { id: 'spa-dinner', name: 'Resort · Spa + Dining', time: '18:00 — 22:00', tags: ['spa', 'eat'], tagLabels: { spa: 'MASAJ', eat: 'FINE DINING' }, hint: 'Thai masaj + kayalık restoran', lat: 9.5725165, lng: 99.9238924, address: 'Four Seasons', history: 'Nuad Thai (Thai massage) 2019 UNESCO Intangible Heritage. 2500 yıllık Hindu-Budist kökenli. "Sen" enerji hatları.', knowBefore: 'FS Spa: 60 dk Thai massage ~$150, Herbal Compress ~$200. Dinner: Lai Thai veya beach BBQ.', tip: 'Masaj öğleden sonra, akşam yemek hafif.' }
+  ]},
+  { day: 5, dayLabel: 'Çarşamba · 27 May', theme: '🏝 Samui keşfi · Buda + Jungle + Muay Thai', weather: { hi: 33, lo: 27, icon: '⛅', desc: 'Karışık' }, phase: 'samui', stops: [
+    { id: 'big-buddha', name: 'Big Buddha (Wat Phra Yai)', time: '09:00 — 10:00', tags: ['view', 'must'], tagLabels: { view: 'İKON', must: 'KÜLTÜR' }, hint: '12m altın Buda · 1972 · ada ikonu', lat: 9.5707832, lng: 100.0597982, address: 'Wat Phra Yai, Bo Phut', history: 'Big Buddha 1972\'de inşa edildi — Koh Samui\'nin en tanınmış sembolü. "Mara-Vijaya" pozisyonunda (kötülüğün yenilgisi). Çin-Tayland topluluğunun dini merkezi.', knowBefore: 'Ücretsiz (bağış). Omuz+diz kapalı — sarong 20 THB. Sabah erken sakin.', tip: 'Wat Plai Laem (beyaz Guan Yin heykeli, göl üstü) 10 dk uzakta — kombine et.' },
+    { id: 'secret-garden', name: 'Secret Buddha Garden', time: '11:30 — 13:00', tags: ['view'], tagLabels: { view: 'JUNGLE' }, hint: 'Tarnim Magic Garden · 1976 · bir adamın yaşam eseri', lat: 9.4829041, lng: 99.9944804, address: 'Na Mueang, Samui iç', history: 'Meyve tüccarı Nim Thongsuk 70\'li yaşlarında bu bahçeyi tek başına kurdu, 1990\'a kadar üstünde çalıştı. Jungle içinde dağın tepesinde: taş heykeller + şelale + patikalar. Moss kaplı, el değmemiş estetik.', knowBefore: '100 THB. Dağ yolu dik — concierge şoförlü araba daha güvenli.', tip: 'Na Mueang Waterfall 500m ötede.' },
+    { id: 'muay-thai', name: 'Muay Thai · Chaweng Stadium', time: '20:30 — 23:00', tags: ['activity', 'must'], tagLabels: { activity: 'SPOR', must: 'SİZİN FAVORİ' }, hint: 'Authentic maç gecesi', lat: 9.5374, lng: 100.0613, address: 'Chaweng Boxing Stadium', history: 'Muay Thai ("Sekiz Uzvın Sanatı") 16. yy Siyam ordularının savaş sanatı. Yumruk, dirsek, diz, ayak + klinç. Wai khru (hoca-selamı) dansı dövüş öncesi. Samui\'de 3 stadyum: Chaweng, Lamai, Petchbuncha.', knowBefore: '800-1500 THB. Pzt, Çar, Cum akşamları maçlar. 8-12 dövüş, giderek üst seviye. Çocuk dövüşleri başta.', tip: 'Ringside için erken git. Sinek kovucu al. Bahis çılgınlığı — sen izle, katılma.' }
+  ]},
+  { day: 6, dayLabel: 'Perşembe · 28 May', theme: '🧘 Yoga + Sunset Boat Party', weather: { hi: 32, lo: 27, icon: '⛅', desc: 'Hafif bulutlu, güzel deniz' }, phase: 'samui', stops: [
+    { id: 'yoga-morning', name: 'Resort Yoga + Meditation', time: '07:30 — 09:00', tags: ['spa', 'activity', 'must'], tagLabels: { spa: 'WELLNESS', activity: 'YOGA', must: 'SİZİN FAVORİ' }, hint: 'Sunrise beach yoga', lat: 9.5725165, lng: 99.9238924, address: 'FS Beach Deck', history: '1970\'lerden beri Tayland batı wellness turizminin merkezi. Samui + Phangan dünya yoga retreat kalbi.', knowBefore: 'FS beach yoga 07:30 ücretsiz. Meditation 18:00 sunset.', tip: 'Phangan\'da daha derin retreat yapabilirsin.' },
+    { id: 'boat-party', name: 'Sunset Boat Party', time: '16:30 — 20:30', tags: ['activity', 'must'], tagLabels: { activity: 'SAILING', must: 'SİZİN FAVORİ' }, hint: 'Lüks katamaran · 5 ada · sunset', lat: 9.5725165, lng: 99.9238924, address: 'Na Thon / Bophut pier', history: 'Güneybatı adaları (Koh Madsum = "Pig Island", Koh Tan) kristal berrak. Pig Beach: yerel domuzlar plajda yüzer. Rent a Yacht Samui, Red Baron, Samui Catamaran popüler.', knowBefore: 'Private katamaran $600-1200 (4-8 kişi) · shared ~$90 kişi. Dahil: kokteyl + yemek + snorkel.', tip: 'Private öneri. Route: Koh Madsum pig beach + Koh Tan snorkel + sunset demir.' }
+  ]},
+  { day: 7, dayLabel: 'Cuma · 29 May', theme: '⛵ Samui → Phangan', weather: { hi: 32, lo: 27, icon: '⛅', desc: 'Deniz geçişi' }, phase: 'transit', preTransfer: 'samui_phangan', stops: [
+    { id: 'phangan-arrive', name: 'Anantara · Villa Check-in', time: '~14:00', tags: ['must'], tagLabels: { must: 'YENİ OTEL' }, hint: 'Thong Nai Pan · plunge-pool villa', lat: 9.7792992, lng: 100.0554169, address: 'Anantara Rasananda', history: 'Thong Nai Pan Noi 20 yıl önce sadece balıkçı köyüydü — 2000\'lerde lüks resortlar geldi. Yarım ay koy, adaların en güzeli.', knowBefore: 'Check-in 14:00. Villa host ("butler") atanır — Anantara signature. Welcome drink + fruit platter.', tip: 'İlk akşam: Villa BBQ (kendi terasta şef) ya da Rim Talay main rest.' }
+  ]},
+  { day: 8, dayLabel: 'Cumartesi · 30 May', theme: '🌊 Plaj + Yoga Retreat', weather: { hi: 32, lo: 27, icon: '⛅', desc: 'Sıcak, berrak deniz' }, phase: 'phangan', stops: [
+    { id: 'yoga-phangan', name: 'Yoga Session · Srithanu', time: '08:00 — 10:00', tags: ['spa', 'activity', 'must'], tagLabels: { spa: 'WELLNESS', activity: 'YOGA', must: 'SİZİN FAVORİ' }, hint: 'Phangan = dünya yoga merkezi', lat: 9.7465, lng: 99.9565, address: 'Srithanu, batı Phangan', history: 'Srithanu köyü 1990\'lardan beri "conscious traveler" merkezi — yoga shalaları, retreat, vegan kafeler. Agama Yoga (1998 Tantric), Orion Healing, The Yogarden beachfront shala.', knowBefore: 'Drop-in 300-500 THB. Anantara\'dan 40 dk taksi (jungle yolu, ~1000 THB).', tip: 'Srithanu kafeler: Karma Kafe, Fisherman\'s Restaurant.' },
+    { id: 'beach-afternoon', name: 'Anantara · Plaj ve Havuz', time: '13:00 — 17:00', tags: ['spa'], tagLabels: { spa: 'RELAX' }, hint: 'Plunge pool · beach cabana', lat: 9.7792992, lng: 100.0554169, address: 'Anantara Rasananda', history: 'Thong Nai Pan Noi 1.2 km uzunluğunda, 100m geniş, turkuaz.', knowBefore: 'Free: kayak, SUP, snorkel, volleyball. Paid: jet ski, parasailing.', tip: 'Hiçbir şey yapmama gününün keyfi.' },
+    { id: 'villa-bbq', name: 'Villa BBQ · Private Dinner', time: '19:30 — 22:30', tags: ['eat', 'must'], tagLabels: { eat: 'FINE', must: 'ROMANTİK' }, hint: 'Villa terasında özel şef', lat: 9.7792992, lng: 100.0554169, address: 'Anantara', history: 'Anantara Villa Dining: kendi özel şefini villaya çağırırsın. Lobster, shrimp, massaman curry + mango sticky rice combo.', knowBefore: 'Rez 24 saat önce. ~$200-400 çift. Candle-lit, star-lit.', tip: 'Bu resort\'un signature\'ı — bir akşam mutlaka.' }
+  ]},
+  { day: 9, dayLabel: 'Pazar · 31 May', theme: '🤿 Sail Rock Dalış + Sunset Bar', weather: { hi: 32, lo: 27, icon: '☀️', desc: 'Güneşli, deniz berrak' }, phase: 'phangan', stops: [
+    { id: 'diving', name: 'Sail Rock Dalış/Şnörkel', time: '07:30 — 17:00', tags: ['activity', 'must'], tagLabels: { activity: 'DALIŞ', must: 'SİZİN FAVORİ' }, hint: 'Tayland\'ın en iyi dalış noktası', lat: 9.902, lng: 99.972, address: 'Sail Rock · Phangan-Tao arası', history: 'Sail Rock (Hin Bai) volkanik kayalık, 40m derine iner. Whale shark Şubat-Mayıs peak, chimney tünel, milyonlarca balık. Surface snorkel 5m çok zengin.', knowBefore: 'Sertifikalı: 2-tank ~3500 THB. Discover Scuba (sertifikasız 12m) ~4500 THB. Snorkel-only ~1800 THB. Firmalar: Chaloklum Diving, Haad Yao Divers.', tip: 'Mayıs sonu whale shark şansı var. Anantara concierge villadan pickup.' },
+    { id: 'sunset-bar', name: 'Secret Beach Sunset Bar', time: '18:30 — 21:00', tags: ['eat', 'view'], tagLabels: { eat: 'COCKTAIL', view: 'SUNSET' }, hint: 'Haad Son · Phangan\'ın en iyi gün batımı', lat: 9.725, lng: 99.9595, address: 'Haad Son', history: '2012\'de açılmış, Phangan\'ın en fotoğraflanan bar. Ahşap-bambu, okyanusa deck, fire show.', knowBefore: 'Gün batımı ~18:45. 18:15\'te yer kap. Kokteyl 200-300 THB.', tip: 'Anantara → Haad Son 45 dk. Return taksi önceden ayarla.' }
+  ]},
+  { day: 10, dayLabel: 'Pazartesi · 1 Haz', theme: '🧖 Spa günü · tam dinlenme', weather: { hi: 32, lo: 27, icon: '⛅', desc: 'Mükemmel' }, phase: 'phangan', stops: [
+    { id: 'spa-day', name: 'Anantara Spa · Couples Full Day', time: '10:00 — 18:00', tags: ['spa', 'must'], tagLabels: { spa: 'RELAX', must: 'EŞLE İKİLİ' }, hint: 'Couples massage · steam · pool pavilion', lat: 9.7792992, lng: 100.0554169, address: 'Anantara Spa', history: 'Anantara Spa Phangan\'ın en iyisi. Thai + Ayurvedic + Japon etkileri. Signature "Royal Thai Ritual" (4 saat, body scrub + Thai massage + aromatherapy + flower bath).', knowBefore: 'Couples pavilion ~$400-600 full. Half-day ~$200. Steam + plunge + lounge dahil.', tip: 'Öğle yemeğini pool lounger\'dan — spa healthy menu (coconut water, smoothies, poke).' },
+    { id: 'bottle-beach', name: 'Bottle Beach · Opsiyonel', time: 'Öğle sonrası', tags: ['view', 'opt'], tagLabels: { view: 'İZOLE PLAJ', opt: 'OPSİYONEL' }, hint: 'Sadece teknekle · zümrüt su', lat: 9.8, lng: 100.02, address: 'Bottle Beach (Haad Khuat)', history: 'Phangan kuzey ucunda, sadece tekne/45 dk jungle trek. "The Beach" hissi.', knowBefore: 'Long-tail boat Chaloklum pier\'den ~500 THB.', tip: 'Spa yorucu — atlayabilirsin.' }
+  ]},
+  { day: 11, dayLabel: 'Salı · 2 Haz', theme: '🎎 Night Market + Dinlenme', weather: { hi: 32, lo: 27, icon: '⛅', desc: 'Keyifli' }, phase: 'phangan', stops: [
+    { id: 'thong-sala-market', name: 'Thong Sala Night Market', time: '18:00 — 20:00', tags: ['eat'], tagLabels: { eat: 'SOKAK YEMEĞİ' }, hint: 'Salı + Cmt · lokal pazar', lat: 9.7105, lng: 100.0095, address: 'Thong Sala merkez', history: 'Phangan\'ın ana ticaret merkezi. Salı+Cmt akşam "Phantip Walking Street": 30+ yerel stand.', knowBefore: 'Anantara\'dan 30 dk taksi. 300 THB\'ye şahane yemek.', tip: 'Dene: green mango sticky rice, roti, grilled seafood, fresh coconut.' },
+    { id: 'star-gazing', name: 'Resort · Star Gazing + Cocktail', time: '21:00 — 23:00', tags: ['spa'], tagLabels: { spa: 'CHILL' }, hint: 'Full Moon öncesi sakin gece', lat: 9.7792992, lng: 100.0554169, address: 'Anantara', history: 'Dolunay yaklaşıyor — gökyüzü parlamaya başladı. Thong Nai Pan ışık kirliliği olmadığı için star-gazing mükemmel.', knowBefore: 'Anantara\'nın terrace\'ında özel cocktail setup\'ı — concierge\'e söyle.', tip: 'Yarın Full Moon hazırlık — bu gece erken yat.' }
+  ]},
+  { day: 12, dayLabel: 'Çarşamba · 3 Haz', theme: '🌕 FULL MOON PARTY GECESİ', weather: { hi: 32, lo: 27, icon: '🌕', desc: 'Dolunay · sıcak' }, phase: 'phangan', stops: [
+    { id: 'pre-moon', name: 'Resort · Dinlen, Hazırlan', time: 'Sabah-öğle', tags: ['spa'], tagLabels: { spa: 'HAZIRLIK' }, hint: 'Gece uzun · uyku bankası', lat: 9.7792992, lng: 100.0554169, address: 'Anantara', history: 'Full Moon Party 1985\'te Haad Rin\'de 20-30 backpacker\'ın dolunay kutlamasıyla başladı. Şimdi ayda 30,000+ kişi. Dolunay gecesi yapılır.', knowBefore: '21:00-06:00 parti. Sabah uyu, öğlen hafif yemek, akşam 19:00\'a dinlen.', tip: 'Gece: kapalı ayakkabı (cam), önden ödeli taksi, telefon+şarj+7-Eleven kart, küçük bel çantası.' },
+    { id: 'full-moon', name: '🌕 Full Moon Party · Haad Rin', time: '21:00 — 04:00', tags: ['activity', 'must'], tagLabels: { activity: 'PARTİ', must: 'BUCKET LIST' }, hint: 'Dolunay · 20.000+ kişi · neon + fire', lat: 9.676594, lng: 100.0680853, address: 'Haad Rin Beach', history: 'Haad Rin\'de her ay dolunay gecesi dünyanın en büyük plaj partisi. 15+ klüp kendi müziğini çalar (EDM, house, trance, trap, drum&bass, reggae). Fire rope, fire limbo, neon paint stations. 200 THB giriş.', knowBefore: '⚠️ Güvenlik: kapalı ayakkabı (cam kırıkları), bucket kokteylleri dikkat (yüksek alkol), cüzdan/pasaport bırak, otel kartı yanında, telefon su geçirmez poşet. Anantara → Haad Rin 45 dk, 2000 THB roundtrip — önceden organize.', tip: 'Strateji: 21:00\'de git (peak 23:00), 02-03:00\'te çık. Cambridge Beach Club fire limbo en iyi. Haad Rin sunrise unutulmaz.' }
+  ]},
+  { day: 13, dayLabel: 'Perşembe · 4 Haz', theme: '⛵ Phangan → Samui → BKK', weather: { hi: 34, lo: 27, icon: '☀️', desc: 'Bangkok: sıcak + nem' }, phase: 'transit', preTransfer: 'phangan_ist', stops: [
+    { id: 'checkout', name: 'Phangan → Samui → BKK', time: 'Sabah erken', tags: ['must'], tagLabels: { must: 'TRANSFER' }, hint: 'Uyuyamadıysan uçakta uyursun', lat: 9.7792992, lng: 100.0554169, address: 'Anantara', history: 'Full Moon ertesi ağır olabilir — bu yüzden Anantara\'da son gece 4 Haz için rezerve. Sabah checkout.', knowBefore: '08:00 checkout → 09:00 ferry → 10:30 USM → 12:00 PG → BKK öğleden sonra.', tip: 'Alt plan: 4 Haz\'ı Phangan\'da dinlenme yap, 5 Haz sabah transfer.' },
+    { id: 'bkk-night', name: 'Bangkok · Son Gece (opsiyonel)', time: 'Akşam', tags: ['eat', 'opt'], tagLabels: { eat: 'OPSİYONEL' }, hint: 'Sky bar + son Thai yemek', lat: 13.7563, lng: 100.5018, address: 'Bangkok merkez', history: 'Otel seçenekleri: Mandarin Oriental (nehir klasik), The Siam (Art Deco butik), Rosewood (modern), Banyan Tree (sky bar). Sky bar: Lebua (Hangover filmi), Vertigo (Banyan Tree 61. kat), Mahanakhon Skywalk (cam zemin).', knowBefore: '5 Haz\'da kalkıyorsan tam 1 gece Bangkok. 4 Haz akşam kalkıyorsan bu durağı atla.', tip: 'Fine dining: Gaggan Anand, Sorn, Le Du.' }
+  ]},
+  { day: 14, dayLabel: 'Cuma · 5 Haz', theme: '🛬 BKK → İstanbul · Ev', weather: { hi: 23, lo: 16, icon: '🇹🇷', desc: 'İstanbul\'a geri' }, phase: 'transit', stops: [
+    { id: 'bkk-dep', name: 'BKK → IST Kalkış', time: 'Sabah', tags: ['must'], tagLabels: { must: 'EV' }, hint: 'TK 69 · BKK → IST · ~10h', lat: 13.6818969, lng: 100.7468694, address: 'BKK', history: 'TK BKK-IST 1988\'den beri aktif. 10 saat uçuş, rüzgarla 9h 30m olabilir.', knowBefore: 'Check-in 3 saat öncesi. Duty-free: Jim Thompson ipek, mango candies, türban.', tip: 'Uçakta Tayland notları yaz — dönüşte v2 yapacağız.' }
+  ]}
+];
+
+const STORAGE_KEY = 'thailand-itinerary-2026-v1';
+let state = { done: {}, splitRatio: 0.5, mapFilter: 'all' };
+try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) state = { ...state, ...JSON.parse(raw) }; } catch (e) {}
+function saveState() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+
+const allStops = ITINERARY.flatMap(d => d.stops.map(s => ({ ...s, day: d.day, phase: d.phase })));
+const markerRefs = {};
+const foodMarkers = {};
+let activeStopId = null;
+
+const map = L.map('map', { center: [9.7, 100.0], zoom: 10, zoomControl: true, scrollWheelZoom: true, tap: true, zoomSnap: 0.5 });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© OSM · © CARTO', maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+
+function makeIcon(dayNum, num, isDone) { return L.divIcon({ className: 'map-marker', html: `<div class="pin day-${dayNum} ${isDone ? 'done' : ''}"><span class="pin-num">${num}</span></div>`, iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -24] }); }
+function makeFoodIcon() { return L.divIcon({ className: 'map-marker', html: `<div class="pin food"><span class="pin-num">🍴</span></div>`, iconSize: [20, 20], iconAnchor: [10, 20], popupAnchor: [0, -18] }); }
+function makeHotelIcon() { return L.divIcon({ className: 'map-marker', html: `<div class="pin hotel-pin"><span class="pin-num">🏨</span></div>`, iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -28] }); }
+function makeAirportIcon() { return L.divIcon({ className: 'map-marker', html: `<div class="pin airport-pin"><span class="pin-num">✈</span></div>`, iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -24] }); }
+
+const samuiHotelMarker = L.marker([HOTELS.samui.lat, HOTELS.samui.lng], { icon: makeHotelIcon() }).addTo(map);
+samuiHotelMarker.bindPopup(`<strong>🏨 ${HOTELS.samui.name}</strong>`);
+samuiHotelMarker.on('click', () => openHotelDetail('samui'));
+
+const phanganHotelMarker = L.marker([HOTELS.phangan.lat, HOTELS.phangan.lng], { icon: makeHotelIcon() }).addTo(map);
+phanganHotelMarker.bindPopup(`<strong>🏨 ${HOTELS.phangan.name}</strong>`);
+phanganHotelMarker.on('click', () => openHotelDetail('phangan'));
+
+const usmMarker = L.marker([9.5484366, 100.0630279], { icon: makeAirportIcon() }).addTo(map);
+usmMarker.bindPopup('<strong>✈ Koh Samui (USM)</strong>');
+const bkkMarker = L.marker([13.6818969, 100.7468694], { icon: makeAirportIcon() }).addTo(map);
+bkkMarker.bindPopup('<strong>✈ Bangkok (BKK)</strong>');
+
+let globalNum = 0;
+allStops.forEach(stop => {
+  globalNum++;
+  stop.globalNum = globalNum;
+  const isDone = !!state.done[stop.id];
+  const marker = L.marker([stop.lat, stop.lng], { icon: makeIcon(stop.day, globalNum, isDone) }).addTo(map);
+  marker.bindPopup(`<strong>${stop.name}</strong><br><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#7a7260;">GÜN ${stop.day} · ${stop.time}</span>`);
+  marker.on('click', () => openDetail(stop.id));
+  markerRefs[stop.id] = marker;
+});
+
+FOOD.forEach(f => {
+  const marker = L.marker([f.lat, f.lng], { icon: makeFoodIcon() });
+  marker.bindPopup(`<strong>🍴 ${f.name}</strong><br><span style="font-size:10px;color:#7a7260;">${f.kind}</span>`);
+  marker.on('click', () => openFoodDetail(f.id));
+  foodMarkers[f.id] = marker;
+});
+
+function applyMapFilter(f) {
+  state.mapFilter = f; saveState();
+  document.querySelectorAll('.map-filter button').forEach(b => b.classList.toggle('on', b.dataset.filter === f));
+  const showStops = f === 'all' || f === 'stops';
+  const showFood = f === 'all' || f === 'food';
+  Object.values(markerRefs).forEach(m => { if (showStops) map.addLayer(m); else map.removeLayer(m); });
+  if (showStops) { map.addLayer(samuiHotelMarker); map.addLayer(phanganHotelMarker); map.addLayer(usmMarker); map.addLayer(bkkMarker); }
+  else { map.removeLayer(samuiHotelMarker); map.removeLayer(phanganHotelMarker); map.removeLayer(usmMarker); map.removeLayer(bkkMarker); }
+  Object.values(foodMarkers).forEach(m => { if (showFood) map.addLayer(m); else map.removeLayer(m); });
+}
+document.querySelectorAll('.map-filter button').forEach(btn => btn.addEventListener('click', () => applyMapFilter(btn.dataset.filter)));
+applyMapFilter(state.mapFilter);
+
+function renderPlan() {
+  const col = document.getElementById('planCol');
+  col.innerHTML = '';
+  const hotelsEl = document.createElement('div');
+  hotelsEl.innerHTML = `
+    <div class="meta-card hotel" data-hotel="samui">
+      <div class="ic">🏨</div>
+      <div class="meta-t"><div class="meta-name">${HOTELS.samui.name}</div><div class="meta-desc">${HOTELS.samui.area} · ${HOTELS.samui.nights}</div></div>
+    </div>
+    <div class="meta-card hotel" data-hotel="phangan">
+      <div class="ic">🏨</div>
+      <div class="meta-t"><div class="meta-name">${HOTELS.phangan.name}</div><div class="meta-desc">${HOTELS.phangan.area} · ${HOTELS.phangan.nights}</div></div>
+    </div>
+  `;
+  hotelsEl.querySelectorAll('[data-hotel]').forEach(el => el.addEventListener('click', () => openHotelDetail(el.dataset.hotel)));
+  col.appendChild(hotelsEl);
+
+  let lastPhase = '';
+  ITINERARY.forEach(day => {
+    if (day.phase !== lastPhase) {
+      const phaseEl = document.createElement('div');
+      const pName = day.phase === 'samui' ? 'Koh Samui' : day.phase === 'phangan' ? 'Koh Phangan' : 'Transit';
+      const pSub = day.phase === 'samui' ? '5 gece · Four Seasons' : day.phase === 'phangan' ? '6 gece · Anantara' : 'Uçuş/Transfer';
+      phaseEl.className = `phase ${day.phase}`;
+      phaseEl.innerHTML = `<span>${pName}</span><span class="phase-sub">${pSub}</span>`;
+      col.appendChild(phaseEl);
+      lastPhase = day.phase;
+    }
+
+    const completed = day.stops.filter(s => state.done[s.id]).length;
+    const dayEl = document.createElement('div');
+    dayEl.className = 'day';
+    const weatherHTML = day.weather ? `<span class="weather-pill"><span>${day.weather.icon}</span><span class="hi">${day.weather.hi}°</span><span>/</span><span class="lo">${day.weather.lo}°</span></span>` : '';
+    dayEl.innerHTML = `
+      <div class="day-header">
+        <div class="day-num">${day.day < 10 ? '0' + day.day : day.day}</div>
+        <div class="day-meta">
+          <div class="day-date">${day.dayLabel}</div>
+          <div class="day-title">${day.theme}</div>
+        </div>
+        <div class="day-right">
+          <div class="day-count">${completed} / ${day.stops.length}</div>
+          ${weatherHTML}
+        </div>
+      </div>
+      <div class="day-body"></div>
+    `;
+    const body = dayEl.querySelector('.day-body');
+
+    if (day.preTransfer) {
+      const t = TRANSFERS[day.preTransfer];
+      const tEl = document.createElement('div');
+      tEl.className = 'meta-card transfer';
+      tEl.innerHTML = `<div class="ic">✈️</div><div class="meta-t"><div class="meta-name">${t.title}</div><div class="meta-desc">${t.summary} · <strong>${t.duration}</strong></div></div>`;
+      tEl.addEventListener('click', () => openTransferDetail(day.preTransfer));
+      body.appendChild(tEl);
+    }
+
+    day.stops.forEach(stop => {
+      const isDone = !!state.done[stop.id];
+      const isActive = activeStopId === stop.id;
+      const isOpt = (stop.tags || []).includes('opt');
+      const tagHTML = (stop.tags || []).map(t => {
+        const cls = t === 'eat' ? 'eat' : t === 'view' ? 'view' : t === 'spa' ? 'spa' : t === 'activity' ? 'activity' : t === 'must' ? 'must' : t === 'opt' ? 'opt' : '';
+        return `<span class="stop-tag ${cls}">${stop.tagLabels?.[t] || t}</span>`;
+      }).join('');
+      const stopEl = document.createElement('div');
+      stopEl.className = `stop ${isDone ? 'done' : ''} ${isActive ? 'active' : ''} ${isOpt ? 'opt' : ''}`;
+      stopEl.dataset.id = stop.id;
+      stopEl.innerHTML = `
+        <div class="checkbox" data-check="${stop.id}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <div class="stop-body">
+          <div class="stop-top">
+            <div class="stop-name">${stop.name}</div>
+            <div class="stop-time">${stop.time}</div>
+          </div>
+          <div class="stop-hint">${stop.hint}</div>
+          <div>${tagHTML}</div>
+        </div>
+      `;
+      stopEl.addEventListener('click', (e) => {
+        if (e.target.closest('[data-check]')) { e.stopPropagation(); toggleDone(stop.id); }
+        else { openDetail(stop.id); }
+      });
+      body.appendChild(stopEl);
+    });
+    col.appendChild(dayEl);
+  });
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = allStops.length;
+  const done = allStops.filter(s => state.done[s.id]).length;
+  document.getElementById('progressText').textContent = `${done} / ${total}`;
+  document.getElementById('progressFill').style.width = (total ? (done/total)*100 : 0) + '%';
+}
+
+function toggleDone(id) {
+  state.done[id] = !state.done[id];
+  saveState();
+  renderPlan();
+  const stop = allStops.find(s => s.id === id);
+  if (stop && markerRefs[id]) markerRefs[id].setIcon(makeIcon(stop.day, stop.globalNum, !!state.done[id]));
+}
+
+function openDetail(id) {
+  const stop = allStops.find(s => s.id === id);
+  if (!stop) return;
+  activeStopId = id;
+  document.querySelectorAll('.stop').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+  const isDone = !!state.done[id];
+  const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(stop.name + ', Thailand')}`;
+  const photosUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(stop.name + ' Thailand')}`;
+  document.getElementById('detailContent').innerHTML = `
+    <div class="d-eyebrow">Gün ${stop.day} · ${stop.time}</div>
+    <h2 class="d-title">${stop.name}</h2>
+    <div class="d-address">📍 ${stop.address}</div>
+    <div class="d-section"><div class="d-section-label">Kısa Arka Plan</div><p>${stop.history}</p></div>
+    <div class="d-section"><div class="d-section-label">Gitmeden Bilinecekler</div><p>${stop.knowBefore}</p></div>
+    ${stop.tip ? `<div class="d-section"><div class="d-section-label">💡 İpucu</div><p><em>${stop.tip}</em></p></div>` : ''}
+    <div class="d-btn-row">
+      <a class="d-action" href="${gmapsUrl}" target="_blank" rel="noopener">🗺 Maps</a>
+      <a class="d-action ghost" href="${photosUrl}" target="_blank" rel="noopener">📷 Fotoğraflar</a>
+    </div>
+    <button class="d-toggle ${isDone ? 'done-state' : ''}" data-check="${stop.id}">
+      ${isDone ? '✓ Tamamlandı · geri al' : 'Tamamlandı olarak işaretle'}
+    </button>
+  `;
+  document.querySelector('.d-toggle').addEventListener('click', () => { toggleDone(stop.id); openDetail(stop.id); });
+  openSheet();
+  map.flyTo([stop.lat, stop.lng], 13, { duration: 0.7 });
+  setTimeout(() => markerRefs[stop.id]?.openPopup(), 800);
+}
+
+function openFoodDetail(id) {
+  const f = FOOD.find(x => x.id === id);
+  if (!f) return;
+  const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.name + ', Thailand')}`;
+  const photosUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(f.name + ' Thailand')}`;
+  document.getElementById('detailContent').innerHTML = `
+    <div class="d-eyebrow">🍴 ${f.area} · ${f.kind}</div>
+    <h2 class="d-title">${f.name}</h2>
+    <div class="d-address">${f.note}</div>
+    <div class="d-btn-row">
+      <a class="d-action" href="${gmapsUrl}" target="_blank" rel="noopener">🗺 Maps</a>
+      <a class="d-action ghost" href="${photosUrl}" target="_blank" rel="noopener">📷 Fotoğraflar</a>
+    </div>
+  `;
+  openSheet();
+  if (state.mapFilter === 'stops') applyMapFilter('all');
+  map.flyTo([f.lat, f.lng], 13, { duration: 0.7 });
+  setTimeout(() => foodMarkers[f.id]?.openPopup(), 800);
+}
+
+function openHotelDetail(key) {
+  const h = HOTELS[key];
+  const website = key === 'samui' ? 'https://www.fourseasons.com/kohsamui/' : 'https://www.anantara.com/en/rasananda-koh-phangan';
+  const gmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(h.name)}`;
+  document.getElementById('detailContent').innerHTML = `
+    <div class="d-eyebrow">🏨 Konaklama · ${h.nights}</div>
+    <h2 class="d-title">${h.name}</h2>
+    <div class="d-address">📍 ${h.address}</div>
+    <div class="d-section"><div class="d-section-label">Özellik</div><p>${h.info}</p></div>
+    <div class="d-section"><div class="d-section-label">💡 Alternatifler</div><p><em>${h.tip}</em></p></div>
+    <div class="d-btn-row">
+      <a class="d-action" href="${website}" target="_blank" rel="noopener">🌐 Web</a>
+      <a class="d-action ghost" href="${gmaps}" target="_blank" rel="noopener">🗺 Maps</a>
+    </div>
+  `;
+  openSheet();
+  map.flyTo([h.lat, h.lng], 13, { duration: 0.7 });
+}
+
+function openTransferDetail(key) {
+  const t = TRANSFERS[key];
+  const stepsHTML = t.steps.map(s => `<li data-ic="${s.ic}">${s.text}</li>`).join('');
+  document.getElementById('detailContent').innerHTML = `
+    <div class="d-eyebrow">✈️ Transfer</div>
+    <h2 class="d-title">${t.title}</h2>
+    <div class="d-section"><div class="d-section-label">Özet</div><p><strong>${t.summary}</strong><br><em>Tahmini: ${t.duration}</em></p></div>
+    <div class="d-section"><div class="d-section-label">Adım Adım</div><ul class="route-steps">${stepsHTML}</ul></div>
+  `;
+  openSheet();
+}
+
+function openSheet() { document.getElementById('detailPanel').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
+function closeDetail() { document.getElementById('detailPanel').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); activeStopId = null; document.querySelectorAll('.stop').forEach(el => el.classList.remove('active')); }
+document.getElementById('overlay').addEventListener('click', closeDetail);
+
+let touchStartY = 0, touchDelta = 0;
+const panel = document.getElementById('detailPanel');
+panel.addEventListener('touchstart', (e) => { if (panel.scrollTop > 0) return; touchStartY = e.touches[0].clientY; touchDelta = 0; }, { passive: true });
+panel.addEventListener('touchmove', (e) => { if (panel.scrollTop > 0) return; touchDelta = e.touches[0].clientY - touchStartY; if (touchDelta > 0) panel.style.transform = `translateY(${touchDelta}px)`; }, { passive: true });
+panel.addEventListener('touchend', () => { if (touchDelta > 100) closeDetail(); panel.style.transform = ''; touchDelta = 0; }, { passive: true });
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (!confirm('Tüm işaretleri sıfırla?')) return;
+  state.done = {}; saveState();
+  allStops.forEach(stop => markerRefs[stop.id].setIcon(makeIcon(stop.day, stop.globalNum, false)));
+  renderPlan();
+});
+
+const divider = document.getElementById('divider');
+const appEl = document.getElementById('app');
+function applyRatio(ratio) {
+  ratio = Math.max(0.2, Math.min(0.75, ratio));
+  state.splitRatio = ratio;
+  if (window.innerWidth < 900) appEl.style.gridTemplateRows = `auto ${ratio}fr 28px ${1 - ratio}fr`;
+  setTimeout(() => map.invalidateSize(), 50);
+}
+let dragging = false, startY = 0, startRatio = 0.5;
+function startDrag(y) { dragging = true; startY = y; startRatio = state.splitRatio; document.body.style.cursor = 'ns-resize'; }
+function moveDrag(y) { if (!dragging) return; applyRatio(startRatio + (y - startY) / appEl.clientHeight); }
+function endDrag() { if (!dragging) return; dragging = false; document.body.style.cursor = ''; saveState(); }
+divider.addEventListener('mousedown', (e) => { startDrag(e.clientY); e.preventDefault(); });
+window.addEventListener('mousemove', (e) => moveDrag(e.clientY));
+window.addEventListener('mouseup', endDrag);
+divider.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientY), { passive: true });
+window.addEventListener('touchmove', (e) => { if (dragging) { moveDrag(e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
+window.addEventListener('touchend', endDrag);
+
+applyRatio(state.splitRatio);
+window.addEventListener('resize', () => applyRatio(state.splitRatio));
+
+renderPlan();
+map.fitBounds([[9.4, 99.6], [9.9, 100.2]], { padding: [20, 20] });
+setTimeout(() => { document.getElementById('intro').classList.add('hide'); map.invalidateSize(); }, 900);
+setTimeout(() => { const i = document.getElementById('intro'); if (i) i.remove(); }, 1600);
+</script>
+</body>
+</html>
